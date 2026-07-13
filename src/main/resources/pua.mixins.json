@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "yifei.pua.mixin",
+	"compatibilityLevel": "JAVA_17",
+	"mixins": [
+		"MinecraftClientMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
