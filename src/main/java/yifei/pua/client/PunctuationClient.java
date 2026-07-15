@@ -33,6 +33,8 @@ public class PunctuationClient implements ClientModInitializer {
     public static ItemStack markerItemStack = ItemStack.EMPTY;
     public static Vec3d markerEntityPos = null;
     public static MarkerType markerType = MarkerType.NONE;
+    private static long markerTime = 0;
+    private static boolean notifiedExpiring = false;
 
     public static Mode currentMode = Mode.MARKER;
 
@@ -78,9 +80,30 @@ public class PunctuationClient implements ClientModInitializer {
             }
 
             if (markerType != MarkerType.NONE) {
+                checkMarkerExpiry(client);
                 spawnContinuousParticles();
             }
         });
+    }
+
+    private void checkMarkerExpiry(MinecraftClient client) {
+        if (markerTime == 0) return;
+
+        long currentTime = System.currentTimeMillis() / 1000;
+        long elapsed = currentTime - markerTime;
+        int cacheTime = PunctuationConfig.markerCacheTime;
+
+        if (elapsed >= cacheTime) {
+            if (client.player != null) {
+                client.player.sendMessage(Text.translatable("message.pua.marker_expired"), true);
+            }
+            clearMarker();
+        } else if (!notifiedExpiring && elapsed >= cacheTime - 10) {
+            notifiedExpiring = true;
+            if (client.player != null) {
+                client.player.sendMessage(Text.translatable("message.pua.marker_expiring"), true);
+            }
+        }
     }
 
     private void spawnContinuousParticles() {
@@ -93,10 +116,10 @@ public class PunctuationClient implements ClientModInitializer {
         PlayerEntity player = client.player;
         if (player == null || client.world == null) return;
 
-        int renderDistance = client.options.getViewDistance().getValue() * 16;
+        int maxDistance = getMaxMarkerDistance(client);
 
         RaycastAPI raycastAPI = PunctuationAPIAccess.getRaycastAPI();
-        HitResult hitResult = raycastAPI.raycast(player, renderDistance);
+        HitResult hitResult = raycastAPI.raycast(player, maxDistance);
 
         if (hitResult == null) {
             player.sendMessage(Text.translatable("message.pua.no_target"), true);
@@ -108,12 +131,14 @@ public class PunctuationClient implements ClientModInitializer {
             Vec3d hitPos = blockHit.getPos();
             double distance = hitPos.distanceTo(player.getPos());
 
-            if (distance <= renderDistance) {
+            if (distance <= maxDistance) {
                 markerPos = blockHit.getBlockPos().offset(blockHit.getSide());
                 markerEntityId = null;
                 markerItemStack = ItemStack.EMPTY;
                 markerEntityPos = null;
                 markerType = MarkerType.BLOCK;
+                markerTime = System.currentTimeMillis() / 1000;
+                notifiedExpiring = false;
 
                 PunctuationAPIAccess.getParticleAPI().spawnMarkerParticles(new Vec3d(markerPos.getX() + 0.5, markerPos.getY() + 0.5, markerPos.getZ() + 0.5));
                 player.sendMessage(Text.translatable("message.pua.marker_set", markerPos.getX(), markerPos.getY(), markerPos.getZ()), true);
@@ -121,6 +146,13 @@ public class PunctuationClient implements ClientModInitializer {
                 player.sendMessage(Text.translatable("message.pua.out_of_range"), true);
             }
         }
+    }
+
+    private int getMaxMarkerDistance(MinecraftClient client) {
+        int viewDistance = client.options.getViewDistance().getValue();
+        int serverViewDistance = client.getServer() != null ? client.getServer().getPlayerManager().getViewDistance() : viewDistance;
+        int maxDistance = Math.max(viewDistance, serverViewDistance) * 16;
+        return Math.max(maxDistance, 256);
     }
 
     private void registerRendering() {
@@ -134,6 +166,15 @@ public class PunctuationClient implements ClientModInitializer {
             MatrixStack matrices = context.matrixStack();
 
             if (markerType == MarkerType.BLOCK && markerPos != null) {
+                double distance = new Vec3d(markerPos.getX() + 0.5, markerPos.getY() + 0.5, markerPos.getZ() + 0.5)
+                        .distanceTo(player.getPos());
+
+                int maxRenderDistance = getMaxMarkerDistance(client);
+
+                if (distance > maxRenderDistance) {
+                    return;
+                }
+
                 PunctuationAPIAccess.getRenderAPI().renderBlockMarker(matrices, markerPos);
             }
         });
@@ -192,6 +233,8 @@ public class PunctuationClient implements ClientModInitializer {
         markerItemStack = ItemStack.EMPTY;
         markerEntityPos = null;
         markerType = MarkerType.NONE;
+        markerTime = 0;
+        notifiedExpiring = false;
     }
 
     public enum Mode {

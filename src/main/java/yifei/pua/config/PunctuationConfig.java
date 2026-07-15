@@ -15,6 +15,8 @@ public class PunctuationConfig {
     public static boolean showBorder = true;
     public static ColorScheme colorScheme = ColorScheme.NATURE;
     public static boolean useGradient = true;
+    public static int markerCacheTime = 300;
+    public static final int MAX_CACHE_TIME = 600;
 
     private static File configFile;
 
@@ -80,6 +82,12 @@ public class PunctuationConfig {
                     colorScheme = ColorScheme.NATURE;
                 }
                 useGradient = Boolean.parseBoolean(props.getProperty("useGradient", "true"));
+                try {
+                    int cacheTime = Integer.parseInt(props.getProperty("markerCacheTime", "300"));
+                    markerCacheTime = Math.min(Math.max(cacheTime, 10), MAX_CACHE_TIME);
+                } catch (NumberFormatException e) {
+                    markerCacheTime = 300;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -114,10 +122,13 @@ public class PunctuationConfig {
                 writer.write("#   BLACK    - 黑色\n");
                 writer.write("#\n");
                 writer.write("# useGradient - 是否启用边框颜色渐变\n");
-                writer.write("\n");
+                writer.write("#\n");
+                writer.write("# markerCacheTime - 标点缓存时间（秒），范围 10-600，默认 300（5分钟）\n");
+                writer.write("#\n");
                 writer.write("showBorder=" + showBorder + "\n");
                 writer.write("colorScheme=" + colorScheme.name() + "\n");
                 writer.write("useGradient=" + useGradient + "\n");
+                writer.write("markerCacheTime=" + markerCacheTime + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -149,6 +160,14 @@ public class PunctuationConfig {
                 .setDefaultValue(true)
                 .setTooltip(Text.translatable("config.pua.use_gradient.tooltip"))
                 .setSaveConsumer(newValue -> useGradient = newValue)
+                .build());
+
+        visualCategory.addEntry(entryBuilder.startIntField(Text.translatable("config.pua.marker_cache_time"), markerCacheTime)
+                .setDefaultValue(300)
+                .setMin(10)
+                .setMax(MAX_CACHE_TIME)
+                .setTooltip(Text.translatable("config.pua.marker_cache_time.tooltip"))
+                .setSaveConsumer(newValue -> markerCacheTime = newValue)
                 .build());
 
         builder.setSavingRunnable(PunctuationConfig::save);

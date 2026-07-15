@@ -33,5 +33,9 @@
   "config.pua.color_scheme.cyan": "Cyan",
   "config.pua.color_scheme.magenta": "Magenta",
   "config.pua.color_scheme.white": "White",
-  "config.pua.color_scheme.black": "Black"
+  "config.pua.color_scheme.black": "Black",
+  "config.pua.marker_cache_time": "Marker Cache Time",
+  "config.pua.marker_cache_time.tooltip": "Cache time for marker position (seconds), range 10-600, max 10 minutes",
+  "message.pua.marker_expired": "§cMarker expired!",
+  "message.pua.marker_expiring": "§eMarker will expire in 10 seconds!"
 }

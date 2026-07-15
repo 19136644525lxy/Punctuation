@@ -33,5 +33,9 @@
   "config.pua.color_scheme.cyan": "青色",
   "config.pua.color_scheme.magenta": "品红",
   "config.pua.color_scheme.white": "白色",
-  "config.pua.color_scheme.black": "黑色"
+  "config.pua.color_scheme.black": "黑色",
+  "config.pua.marker_cache_time": "标点缓存时间",
+  "config.pua.marker_cache_time.tooltip": "标点位置的缓存时间（秒），范围 10-600，最长不超过10分钟",
+  "message.pua.marker_expired": "§c标点已过期！",
+  "message.pua.marker_expiring": "§e标点即将在10秒后过期！"
 }
