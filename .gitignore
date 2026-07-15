@@ -34,7 +34,7 @@ run/
 gradle-9.5.1/
 libs/
 sources/
-los/
+logs/
 
 # java
 

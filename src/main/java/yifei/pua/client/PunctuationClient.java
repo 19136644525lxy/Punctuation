@@ -23,6 +23,7 @@ import org.lwjgl.glfw.GLFW;
 import yifei.pua.PunctuationNetworking;
 import yifei.pua.api.PunctuationAPIAccess;
 import yifei.pua.api.RaycastAPI;
+import yifei.pua.config.PunctuationConfig;
 
 import java.util.UUID;
 
@@ -53,6 +54,7 @@ public class PunctuationClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        PunctuationConfig.init(MinecraftClient.getInstance().runDirectory.toPath().resolve("config"));
         registerInputHandling();
         registerRendering();
         registerTeleportKey();
@@ -130,40 +132,9 @@ public class PunctuationClient implements ClientModInitializer {
             if (player == null || client.world == null) return;
 
             MatrixStack matrices = context.matrixStack();
-            int renderDistance = client.options.getViewDistance().getValue() * 16;
 
             if (markerType == MarkerType.BLOCK && markerPos != null) {
-                double distance = new Vec3d(markerPos.getX() + 0.5, markerPos.getY() + 0.5, markerPos.getZ() + 0.5)
-                        .distanceTo(player.getPos());
-
-                if (distance > renderDistance) {
-                    clearMarker();
-                    return;
-                }
-
                 PunctuationAPIAccess.getRenderAPI().renderBlockMarker(matrices, markerPos);
-            } else if (markerType == MarkerType.ENTITY && markerEntityId != null) {
-                ItemEntity itemEntity = findItemEntity(client, markerEntityId);
-
-                Vec3d entityPos;
-                if (itemEntity != null) {
-                    entityPos = itemEntity.getPos();
-                    markerEntityPos = entityPos;
-                } else if (markerEntityPos != null) {
-                    entityPos = markerEntityPos;
-                } else {
-                    clearMarker();
-                    return;
-                }
-
-                double distance = entityPos.distanceTo(player.getPos());
-
-                if (distance > renderDistance) {
-                    clearMarker();
-                    return;
-                }
-
-                PunctuationAPIAccess.getRenderAPI().renderEntityMarker(matrices, entityPos, player.getEyePos(), markerItemStack);
             }
         });
     }

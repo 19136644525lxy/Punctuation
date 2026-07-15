@@ -6,10 +6,17 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.Properties;
+
 public class PunctuationConfig {
     public static boolean showBorder = true;
     public static ColorScheme colorScheme = ColorScheme.NATURE;
     public static boolean useGradient = true;
+
+    private static File configFile;
 
     public enum ColorScheme {
         NATURE(0x00FF80, 0x00FF00),
@@ -53,6 +60,70 @@ public class PunctuationConfig {
         }
     }
 
+    public static void init(Path configDir) {
+        configFile = configDir.resolve("pua.properties").toFile();
+        load();
+        if (!configFile.exists()) {
+            save();
+        }
+    }
+
+    private static void load() {
+        if (configFile.exists()) {
+            Properties props = new Properties();
+            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8)) {
+                props.load(reader);
+                showBorder = Boolean.parseBoolean(props.getProperty("showBorder", "true"));
+                try {
+                    colorScheme = ColorScheme.valueOf(props.getProperty("colorScheme", "NATURE"));
+                } catch (IllegalArgumentException e) {
+                    colorScheme = ColorScheme.NATURE;
+                }
+                useGradient = Boolean.parseBoolean(props.getProperty("useGradient", "true"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void save() {
+        try {
+            if (!configFile.getParentFile().exists()) {
+                configFile.getParentFile().mkdirs();
+            }
+            try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8)) {
+                writer.write("# Punctuation Mod Configuration\n");
+                writer.write("# 标点模组配置文件\n");
+                writer.write("#\n");
+                writer.write("# showBorder - 是否显示标点高亮边框\n");
+                writer.write("#\n");
+                writer.write("# colorScheme - 边框颜色方案：\n");
+                writer.write("#   NATURE   - 自然绿\n");
+                writer.write("#   ICE      - 寒冰蓝\n");
+                writer.write("#   FIRE     - 火焰红\n");
+                writer.write("#   PURPLE   - 神秘紫\n");
+                writer.write("#   GOLD     - 金色\n");
+                writer.write("#   RED      - 红色\n");
+                writer.write("#   BLUE     - 蓝色\n");
+                writer.write("#   GREEN    - 绿色\n");
+                writer.write("#   PINK     - 粉色\n");
+                writer.write("#   ORANGE   - 橙色\n");
+                writer.write("#   CYAN     - 青色\n");
+                writer.write("#   MAGENTA  - 品红\n");
+                writer.write("#   WHITE    - 白色\n");
+                writer.write("#   BLACK    - 黑色\n");
+                writer.write("#\n");
+                writer.write("# useGradient - 是否启用边框颜色渐变\n");
+                writer.write("\n");
+                writer.write("showBorder=" + showBorder + "\n");
+                writer.write("colorScheme=" + colorScheme.name() + "\n");
+                writer.write("useGradient=" + useGradient + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static Screen createConfigScreen(Screen parent) {
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
@@ -80,8 +151,7 @@ public class PunctuationConfig {
                 .setSaveConsumer(newValue -> useGradient = newValue)
                 .build());
 
-        builder.setSavingRunnable(() -> {
-        });
+        builder.setSavingRunnable(PunctuationConfig::save);
 
         return builder.build();
     }
