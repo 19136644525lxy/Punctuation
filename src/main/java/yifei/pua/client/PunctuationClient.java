@@ -116,7 +116,7 @@ public class PunctuationClient implements ClientModInitializer {
         PlayerEntity player = client.player;
         if (player == null || client.world == null) return;
 
-        int maxDistance = getMaxMarkerDistance(client);
+        double maxDistance = getMaxMarkerDistance(client);
 
         RaycastAPI raycastAPI = PunctuationAPIAccess.getRaycastAPI();
         HitResult hitResult = raycastAPI.raycast(player, maxDistance);
@@ -148,11 +148,8 @@ public class PunctuationClient implements ClientModInitializer {
         }
     }
 
-    private int getMaxMarkerDistance(MinecraftClient client) {
-        int viewDistance = client.options.getViewDistance().getValue();
-        int serverViewDistance = client.getServer() != null ? client.getServer().getPlayerManager().getViewDistance() : viewDistance;
-        int maxDistance = Math.max(viewDistance, serverViewDistance) * 16;
-        return Math.max(maxDistance, 256);
+    private double getMaxMarkerDistance(MinecraftClient client) {
+        return Double.MAX_VALUE;
     }
 
     private void registerRendering() {
@@ -169,7 +166,7 @@ public class PunctuationClient implements ClientModInitializer {
                 double distance = new Vec3d(markerPos.getX() + 0.5, markerPos.getY() + 0.5, markerPos.getZ() + 0.5)
                         .distanceTo(player.getPos());
 
-                int maxRenderDistance = getMaxMarkerDistance(client);
+                double maxRenderDistance = getMaxMarkerDistance(client);
 
                 if (distance > maxRenderDistance) {
                     return;
