@@ -24,8 +24,6 @@ A Minecraft Fabric mod that allows players to mark positions using the middle mo
 | Middle Mouse Button | Mark position in Marker Mode |
 | P | Teleport to marker |
 | Left Alt | Toggle Marker/Pick Block Mode |
-| Y | Accept teleport request |
-| N | Cancel teleport request |
 
 ## Configuration
 
