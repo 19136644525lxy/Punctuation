@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "faaa:item/box"
+    "layer0": "ah:item/box"
   }
 }
