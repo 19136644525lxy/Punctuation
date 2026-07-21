@@ -1,0 +1,18 @@
+{
+  "message.ah.made_friendly": "§aTamed §b%s §aas your ally!",
+  "message.ah.already_friendly": "§cThis mob is already your ally!",
+  "message.ah.not_friendly": "§cThis mob is not your ally!",
+  "message.ah.not_your_mob": "§cThis is not your mob!",
+  "message.ah.stored": "§aStored §b%s §ain mob box!",
+  "message.ah.released": "§aReleased §b%s §a!",
+  "message.ah.empty_box": "§cThe mob box is empty!",
+  "message.ah.behavior_changed": "§eBehavior mode changed to: §b%s",
+  "ah.behavior.idle": "Idle",
+  "ah.behavior.follow": "Follow",
+  "ah.behavior.patrol": "Patrol",
+  "item.ah.mob_box": "Mob Box",
+  "item.ah.mob_box.name": "Mob Box - %s",
+  "item.ah.mob_box.name_multi": "Mob Box - %s x%d",
+  "item.ah.mob_box.name_mixed": "Mob Box - %d types x%d",
+  "itemGroup.ah.mob_box": "Mob Box"
+}

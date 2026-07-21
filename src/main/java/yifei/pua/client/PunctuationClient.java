@@ -5,13 +5,17 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -20,6 +24,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
+import yifei.pua.api.MarkerEvent;
+import yifei.pua.api.impl.PunctuationAPIImpl;
 import yifei.pua.PunctuationNetworking;
 import yifei.pua.api.PunctuationAPIAccess;
 import yifei.pua.api.RaycastAPI;
@@ -33,8 +39,8 @@ public class PunctuationClient implements ClientModInitializer {
     public static ItemStack markerItemStack = ItemStack.EMPTY;
     public static Vec3d markerEntityPos = null;
     public static MarkerType markerType = MarkerType.NONE;
-    private static long markerTime = 0;
-    private static boolean notifiedExpiring = false;
+    public static long markerTime = 0;
+    public static boolean notifiedExpiring = false;
 
     public static Mode currentMode = Mode.MARKER;
 
@@ -54,6 +60,13 @@ public class PunctuationClient implements ClientModInitializer {
             "category.pua"
     ));
 
+    private final KeyBinding cycleIconKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.pua.cycle_icon",
+            InputUtil.Type.KEYSYM,
+            -1,
+            "category.pua"
+    ));
+
     @Override
     public void onInitializeClient() {
         PunctuationConfig.init(MinecraftClient.getInstance().runDirectory.toPath().resolve("config"));
@@ -61,6 +74,22 @@ public class PunctuationClient implements ClientModInitializer {
         registerRendering();
         registerTeleportKey();
         registerToggleModeKey();
+        registerCycleIconKey();
+        registerResourceReloadListener();
+    }
+
+    private void registerResourceReloadListener() {
+        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+            @Override
+            public net.minecraft.util.Identifier getFabricId() {
+                return new net.minecraft.util.Identifier("pua", "marker_icons");
+            }
+
+            @Override
+            public void reload(net.minecraft.resource.ResourceManager resourceManager) {
+                yifei.pua.api.impl.RenderAPIImpl.initializeIcons(resourceManager);
+            }
+        });
     }
 
     private void registerInputHandling() {
@@ -142,6 +171,35 @@ public class PunctuationClient implements ClientModInitializer {
 
                 PunctuationAPIAccess.getParticleAPI().spawnMarkerParticles(new Vec3d(markerPos.getX() + 0.5, markerPos.getY() + 0.5, markerPos.getZ() + 0.5));
                 player.sendMessage(Text.translatable("message.pua.marker_set", markerPos.getX(), markerPos.getY(), markerPos.getZ()), true);
+
+                ((PunctuationAPIImpl) PunctuationAPIAccess.getInstance()).triggerMarkerEvent(new MarkerEvent(player, markerPos));
+            } else {
+                player.sendMessage(Text.translatable("message.pua.out_of_range"), true);
+            }
+        } else if (hitResult.getType() == HitResult.Type.ENTITY) {
+            EntityHitResult entityHit = (EntityHitResult) hitResult;
+            Entity hitEntity = entityHit.getEntity();
+            Vec3d hitPos = entityHit.getPos();
+            double distance = hitPos.distanceTo(player.getPos());
+
+            if (distance <= maxDistance) {
+                markerPos = null;
+                markerEntityId = hitEntity.getUuid();
+                markerEntityPos = hitEntity.getPos();
+                markerType = MarkerType.ENTITY;
+                markerTime = System.currentTimeMillis() / 1000;
+                notifiedExpiring = false;
+
+                if (hitEntity instanceof ItemEntity) {
+                    markerItemStack = ((ItemEntity) hitEntity).getStack().copy();
+                } else {
+                    markerItemStack = ItemStack.EMPTY;
+                }
+
+                PunctuationAPIAccess.getParticleAPI().spawnMarkerParticles(hitEntity.getPos());
+                player.sendMessage(Text.translatable("message.pua.marker_entity", hitEntity.getName().getString()), true);
+
+                ((PunctuationAPIImpl) PunctuationAPIAccess.getInstance()).triggerMarkerEvent(new MarkerEvent(player, hitEntity));
             } else {
                 player.sendMessage(Text.translatable("message.pua.out_of_range"), true);
             }
@@ -223,6 +281,22 @@ public class PunctuationClient implements ClientModInitializer {
                 clearMarker();
                 String modeKey = currentMode == Mode.MARKER ? "message.pua.mode_marker" : "message.pua.mode_pick_block";
                 client.player.sendMessage(Text.translatable("message.pua.mode_switched", Text.translatable(modeKey)), true);
+            }
+        });
+    }
+
+    private void registerCycleIconKey() {
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.currentScreen != null) return;
+
+            while (cycleIconKey.wasPressed()) {
+                int maxIndex = yifei.pua.api.impl.RenderAPIImpl.getMaxIconIndex();
+                PunctuationConfig.markerIconIndex = (PunctuationConfig.markerIconIndex + 1) % (maxIndex + 1);
+                
+                String iconName = yifei.pua.api.impl.RenderAPIImpl.getIconName(PunctuationConfig.markerIconIndex);
+                client.player.sendMessage(Text.translatable("message.pua.icon_switched", iconName), true);
+                
+                PunctuationConfig.save();
             }
         });
     }

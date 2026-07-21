@@ -17,6 +17,7 @@ public class PunctuationConfig {
     public static boolean useGradient = true;
     public static int markerCacheTime = 300;
     public static final int MAX_CACHE_TIME = 600;
+    public static int markerIconIndex = 0;
 
     private static File configFile;
 
@@ -88,13 +89,18 @@ public class PunctuationConfig {
                 } catch (NumberFormatException e) {
                     markerCacheTime = 300;
                 }
+                try {
+                    markerIconIndex = Integer.parseInt(props.getProperty("markerIconIndex", "0"));
+                } catch (NumberFormatException e) {
+                    markerIconIndex = 0;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private static void save() {
+    public static void save() {
         try {
             if (!configFile.getParentFile().exists()) {
                 configFile.getParentFile().mkdirs();
@@ -125,10 +131,13 @@ public class PunctuationConfig {
                 writer.write("#\n");
                 writer.write("# markerCacheTime - 标点缓存时间（秒），范围 10-600，默认 300（5分钟）\n");
                 writer.write("#\n");
+                writer.write("# markerIconIndex - 当前使用的标点图标索引，0=默认图标，1=默认图标1，2=默认图标2，3=默认图标3\n");
+                writer.write("#\n");
                 writer.write("showBorder=" + showBorder + "\n");
                 writer.write("colorScheme=" + colorScheme.name() + "\n");
                 writer.write("useGradient=" + useGradient + "\n");
                 writer.write("markerCacheTime=" + markerCacheTime + "\n");
+                writer.write("markerIconIndex=" + markerIconIndex + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -168,6 +177,14 @@ public class PunctuationConfig {
                 .setMax(MAX_CACHE_TIME)
                 .setTooltip(Text.translatable("config.pua.marker_cache_time.tooltip"))
                 .setSaveConsumer(newValue -> markerCacheTime = newValue)
+                .build());
+
+        visualCategory.addEntry(entryBuilder.startIntField(Text.translatable("config.pua.marker_icon"), markerIconIndex)
+                .setDefaultValue(0)
+                .setMin(0)
+                .setMax(10)
+                .setTooltip(Text.translatable("config.pua.marker_icon.tooltip"))
+                .setSaveConsumer(newValue -> markerIconIndex = newValue)
                 .build());
 
         builder.setSavingRunnable(PunctuationConfig::save);

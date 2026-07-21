@@ -35,5 +35,8 @@
 		"fabric-api": "*",
 		"cloth-config": ">=11.1.136",
 		"modmenu": ">=7.2.2"
-	}
+	},
+	"exposes": [
+		"yifei.pua.api"
+	]
 }

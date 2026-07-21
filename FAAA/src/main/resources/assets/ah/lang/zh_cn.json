@@ -1,0 +1,20 @@
+{
+  "message.ah.made_friendly": "§a已将 §b%s §a驯服为你的盟友！",
+  "message.ah.already_friendly": "§c该生物已经是你的盟友！",
+  "message.ah.not_friendly": "§c该生物不是你的盟友！",
+  "message.ah.not_your_mob": "§c这不是你的生物！",
+  "message.ah.stored": "§a已将 §b%s §a收纳到生物盒中！",
+  "message.ah.released": "§a已释放 §b%s §a！",
+  "message.ah.empty_box": "§c生物盒是空的！",
+  "message.ah.release_failed": "§c释放失败！",
+  "message.ah.cage_full": "§c生物盒已满！",
+  "message.ah.behavior_changed": "§e行为模式已切换为：§b%s",
+  "ah.behavior.idle": "待机",
+  "ah.behavior.follow": "跟随",
+  "ah.behavior.patrol": "巡逻",
+  "item.ah.mob_box": "生物盒",
+  "item.ah.mob_box.name": "生物盒 - %s",
+  "item.ah.mob_box.name_multi": "生物盒 - %s x%d",
+  "item.ah.mob_box.name_mixed": "生物盒 - %d种生物 x%d",
+  "itemGroup.ah.mob_box": "生物盒"
+}

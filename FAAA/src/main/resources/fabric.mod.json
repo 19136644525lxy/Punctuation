@@ -1,0 +1,32 @@
+{
+	"schemaVersion": 1,
+	"id": "ah",
+	"version": "${version}",
+	"name": "Alone Host",
+	"description": "使用标点功能驯服敌对生物，让它们成为你的盟友",
+	"authors": [
+		"yifei"
+	],
+	"contact": {
+		"homepage": "",
+		"sources": ""
+	},
+	"license": "MIT",
+	"icon": "assets/ah/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"yifei.ah.FormingAnArmyAlone"
+		]
+	},
+	"mixins": [
+		"ah.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*",
+		"pua": ">=1.0.3"
+	}
+}

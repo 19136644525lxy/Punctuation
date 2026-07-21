@@ -10,17 +10,103 @@ import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
+import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import yifei.pua.api.RenderAPI;
 import yifei.pua.config.PunctuationConfig;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RenderAPIImpl implements RenderAPI {
     private static final Logger LOGGER = LoggerFactory.getLogger(RenderAPIImpl.class);
     private static final float A = 1.0f;
 
-    private static final Identifier MARKER_TEXTURE = new Identifier("pua", "textures/gui/punctuation.png");
+    private static final String ICON_PREFIX = "textures/gui/punctuation";
+    private static final String ICON_SUFFIX = ".png";
+    private static final String NAMESPACE = "pua";
+
+    private static final Identifier[] BUILTIN_ICONS = {
+            new Identifier(NAMESPACE, ICON_PREFIX + ICON_SUFFIX),
+            new Identifier(NAMESPACE, ICON_PREFIX + "1" + ICON_SUFFIX),
+            new Identifier(NAMESPACE, ICON_PREFIX + "2" + ICON_SUFFIX),
+            new Identifier(NAMESPACE, ICON_PREFIX + "3" + ICON_SUFFIX)
+    };
+
+    private static List<IconInfo> availableIcons = new ArrayList<>();
+    private static boolean iconsInitialized = false;
+
+    private static class IconInfo {
+        final Identifier texture;
+        final String name;
+        final boolean isBuiltin;
+
+        IconInfo(Identifier texture, String name, boolean isBuiltin) {
+            this.texture = texture;
+            this.name = name;
+            this.isBuiltin = isBuiltin;
+        }
+    }
+
+    public static void initializeIcons(ResourceManager resourceManager) {
+        if (iconsInitialized) return;
+        
+        availableIcons.clear();
+        
+        for (int i = 0; i < BUILTIN_ICONS.length; i++) {
+            Identifier texture = BUILTIN_ICONS[i];
+            String name;
+            if (i == 0) {
+                name = "config.pua.icon.default";
+            } else {
+                name = "config.pua.icon.default" + i;
+            }
+            availableIcons.add(new IconInfo(texture, name, true));
+        }
+        
+        int index = 4;
+        while (index <= 10) {
+            Identifier texture = new Identifier(NAMESPACE, ICON_PREFIX + index + ICON_SUFFIX);
+            try {
+                if (resourceManager.getResource(texture).isPresent()) {
+                    availableIcons.add(new IconInfo(texture, "config.pua.icon.custom" + (index - 3), false));
+                    LOGGER.info("Found custom marker icon: {}", texture);
+                }
+            } catch (Exception e) {
+            }
+            index++;
+        }
+        
+        iconsInitialized = true;
+        LOGGER.info("Initialized {} marker icons", availableIcons.size());
+    }
+
+    public static int getMaxIconIndex() {
+        return availableIcons.isEmpty() ? 0 : availableIcons.size() - 1;
+    }
+
+    public static String getIconName(int index) {
+        if (index < 0 || index >= availableIcons.size()) {
+            index = 0;
+        }
+        IconInfo info = availableIcons.get(index);
+        return net.minecraft.text.Text.translatable(info.name).getString();
+    }
+
+    private Identifier getCurrentIconTexture() {
+        if (!iconsInitialized) {
+            return BUILTIN_ICONS[0];
+        }
+        
+        int index = PunctuationConfig.markerIconIndex;
+        if (index < 0 || index >= availableIcons.size()) {
+            index = 0;
+        }
+        
+        return availableIcons.get(index).texture;
+    }
 
     @Override
     public void renderBlockMarker(MatrixStack matrices, BlockPos pos) {
@@ -135,23 +221,18 @@ public class RenderAPIImpl implements RenderAPI {
         }
     }
 
-    private static boolean markerTextureLogged = false;
-
     private void renderMarkerIcon(MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
-        if (!markerTextureLogged) {
-            markerTextureLogged = true;
-            LOGGER.info("renderMarkerIcon 方法被调用");
-        }
-
         MinecraftClient client = MinecraftClient.getInstance();
         Camera camera = client.gameRenderer.getCamera();
 
         matrices.push();
         matrices.translate(0, 0.7f, 0);
         matrices.multiply(camera.getRotation());
+        matrices.multiply(new Quaternionf().rotationY((float) Math.PI));
         matrices.scale(1.5f, 1.5f, 1.5f);
 
-        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(MARKER_TEXTURE));
+        Identifier currentTexture = getCurrentIconTexture();
+        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(currentTexture));
         MatrixStack.Entry entry = matrices.peek();
 
         float size = 1.5f;
