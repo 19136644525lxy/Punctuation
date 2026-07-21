@@ -10,6 +10,7 @@ import net.minecraft.util.Formatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yifei.ah.item.ModItems;
+import yifei.ah.loot.MobBoxLootTableModifier;
 import yifei.ah.manager.FriendlyMobBehavior;
 import yifei.ah.manager.FriendlyMobManager;
 import yifei.ah.network.PacketHandler;
@@ -29,6 +30,7 @@ public class FormingAnArmyAlone implements ModInitializer {
         
         ModItems.register();
         ModCreativeTabs.register();
+        MobBoxLootTableModifier.register();
         
         FriendlyMobManager.init();
         PacketHandler.register();
