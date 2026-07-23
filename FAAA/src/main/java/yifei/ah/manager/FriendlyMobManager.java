@@ -59,6 +59,9 @@ public class FriendlyMobManager {
         mob.setPersistent();
         mob.setTarget(null);
 
+        // 阻止猪灵/猪灵蛮兵跨维度变异
+        preventPiglinZombification(mob);
+
         applyBuffEffects(mob);
 
         owner.sendMessage(Text.translatable("message.ah.made_friendly", mob.getName().getString()), true);
@@ -136,6 +139,24 @@ public class FriendlyMobManager {
 
     public static ConcurrentHashMap<UUID, FriendlyMobData> getFriendlyMobs() {
         return friendlyMobs;
+    }
+
+    /**
+     * 使用反射阻止猪灵跨维度变异
+     */
+    private static void preventPiglinZombification(MobEntity mob) {
+        try {
+            // 尝试查找 AbstractPiglin 类并调用 setImmuneToZombification 方法
+            Class<?> abstractPiglinClass = Class.forName("net.minecraft.world.entity.monster.piglin.AbstractPiglin");
+            if (abstractPiglinClass.isInstance(mob)) {
+                java.lang.reflect.Method setImmuneMethod = abstractPiglinClass.getMethod("setImmuneToZombification", boolean.class);
+                setImmuneMethod.invoke(mob, true);
+                FormingAnArmyAlone.LOGGER.info("Prevented zombification for piglin: {}", mob.getUuid());
+            }
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+            // 类不存在或方法不存在，忽略
+            FormingAnArmyAlone.LOGGER.debug("Failed to prevent piglin zombification: {}", e.getMessage());
+        }
     }
 
     public static FriendlyMobBehavior getBehavior(MobEntity mob) {
